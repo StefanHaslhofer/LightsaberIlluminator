@@ -1,10 +1,12 @@
+from time import sleep
+
 from PIL import ImageGrab
 from screeninfo import get_monitors
-import matplotlib.pyplot as plt
-import collections
-import statistics
 
 # snapshot a certain area of the screen and interpret pixel colors
+from send_serial import write_to_serial
+
+
 def read_screen_color():
     screen = get_monitors()[1]
     pixel_hex_values = []
@@ -19,9 +21,6 @@ def read_screen_color():
             color = px[x, y]
             pixel_hex_values.append('%02x%02x%02x' % color)
 
-    pm = ImageGrab.grab(bbox=(
-        padding_w, padding_h, screen.width - padding_w, screen.height - padding_h))
-    pm.show()
     return pixel_hex_values
 
 
@@ -32,18 +31,17 @@ def retrieve_color_anomaly(pixel_color_values):
         if pxc not in color_map:
             color_map[pxc] = 1
         else:
-            color_map[pxc]+=1
-
-    # check for anomalies larger than the median
-    # ignore color codes that are present < 10 times because it distorts the statistic too much
-    median = statistics.median(filter(lambda cm: cm > 10, color_map.values()))
-    #color_map = dict(filter(lambda cm: cm[1] > median, color_map.items()))
-    color_map_sorted = collections.OrderedDict(sorted(color_map.items()))
+            color_map[pxc] += 1
 
     green_spectrum = dict(filter(lambda cm: cm[0] > 'f00000' and cm[0] < 'f9ffff', color_map.items()))
 
-    print('a')
+    if len(green_spectrum) > 25:
+        write_to_serial("2")
+    else:
+        write_to_serial("0")
 
-    #f50000 fbff00
-pxcs = read_screen_color()
-retrieve_color_anomaly(pxcs)
+
+while True:
+    pxcs = read_screen_color()
+    retrieve_color_anomaly(pxcs)
+    sleep(2)

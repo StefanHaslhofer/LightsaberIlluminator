@@ -11,5 +11,5 @@ arduino = serial.Serial('COM5', 9600)
 def write_to_serial(x):
     if not arduino.is_open:
         arduino.open()
-    print('writing to serial...')
+    #print('writing to serial...')
     arduino.write(x.encode())
